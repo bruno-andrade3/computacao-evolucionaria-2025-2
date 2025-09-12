@@ -16,8 +16,7 @@ taxa_de_mutacao = 0.05
 geracoes = 500 #Mudar se demorar muito pra rodar
 tamanho_torneio = 3
 
-populacao = np.random.randint(2, size=(tamanho_da_populacao, tamanho_do_genoma))
-print(populacao)
+elitismo = False # True para usar elitismo (manter o melhor indivíduo)
 
 def fitness(individuo):
     peso_total = np.dot(individuo, pesos_dos_objetos)
@@ -44,10 +43,9 @@ def mutacao(individuo):
             individuo[i] = 1 - individuo[i]
     return individuo
 
+populacao = np.random.randint(2, size=(tamanho_da_populacao, tamanho_do_genoma))
 
 inicio= time.time()
-
-populacao = np.random.randint(2, size=(tamanho_da_populacao, tamanho_do_genoma))
 
 melhor_valor = 0
 melhor_solucao = None
@@ -62,17 +60,34 @@ for g in range(geracoes):
         melhor_valor = max_fit
         melhor_solucao = populacao[np.argmax(aptidoes)].copy()
         geracao_melhor = g
-    
-    nova_populacao = []
-    while len(nova_populacao) < tamanho_da_populacao:
-        pai1 = selecao_por_torneio(populacao, aptidoes)
-        pai2 = selecao_por_torneio(populacao, aptidoes)
-        filho1, filho2 = crossover(pai1, pai2)
-        filho1 = mutacao(filho1)
-        filho2 = mutacao(filho2)
-        nova_populacao.append(filho1)
-        nova_populacao.append(filho2)
-    
+
+    if elitismo:
+        # Elitismo: manter o melhor indivíduo
+        elite = populacao[np.argmax(aptidoes)].copy()
+        nova_populacao = [elite] # Começa nova população com o elite
+
+        while len(nova_populacao) < tamanho_da_populacao:
+            pai1 = selecao_por_torneio(populacao, aptidoes)
+            pai2 = selecao_por_torneio(populacao, aptidoes)
+            filho1, filho2 = crossover(pai1, pai2)
+            filho1 = mutacao(filho1)
+            filho2 = mutacao(filho2)
+            nova_populacao.append(filho1)
+            # Com elitismo, temos que garantir que não ultrapassamos o tamanho da população
+            if len(nova_populacao) < tamanho_da_populacao:
+                nova_populacao.append(filho2)
+    else:
+        nova_populacao = []
+
+        while len(nova_populacao) < tamanho_da_populacao:
+            pai1 = selecao_por_torneio(populacao, aptidoes)
+            pai2 = selecao_por_torneio(populacao, aptidoes)
+            filho1, filho2 = crossover(pai1, pai2)
+            filho1 = mutacao(filho1)
+            filho2 = mutacao(filho2)
+            nova_populacao.append(filho1)
+            nova_populacao.append(filho2)
+
     populacao = np.array(nova_populacao[:tamanho_da_populacao])
 
 fim = time.time()
